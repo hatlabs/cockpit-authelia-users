@@ -82,6 +82,51 @@ describe("API wrapper", () => {
     });
   });
 
+  describe("updateUser", () => {
+    it("calls bridge with update-user command and sends JSON input", async () => {
+      const updateData = { displayname: "Updated Name" };
+      const mockResult = { user_id: "john", displayname: "Updated Name", email: "john@example.com", disabled: false, groups: [] };
+      const mockInput = vi.fn();
+
+      mockCockpit.spawn.mockReturnValue({
+        then: (onSuccess: (output: string) => void) => {
+          onSuccess(JSON.stringify(mockResult));
+        },
+        input: mockInput,
+      });
+
+      const result = await updateUser("john", updateData);
+
+      expect(mockCockpit.spawn).toHaveBeenCalledWith(
+        ["cockpit-authelia-users-bridge", "update-user", "john"],
+        { superuser: "require", err: "message" }
+      );
+      expect(mockInput).toHaveBeenCalledWith(JSON.stringify(updateData));
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe("deleteUser", () => {
+    it("calls bridge with delete-user command", async () => {
+      const mockResult = { success: true };
+
+      mockCockpit.spawn.mockReturnValue({
+        then: (onSuccess: (output: string) => void) => {
+          onSuccess(JSON.stringify(mockResult));
+        },
+        input: vi.fn(),
+      });
+
+      const result = await deleteUser("john");
+
+      expect(mockCockpit.spawn).toHaveBeenCalledWith(
+        ["cockpit-authelia-users-bridge", "delete-user", "john"],
+        { superuser: "require", err: "message" }
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
   describe("listGroups", () => {
     it("calls bridge with list-groups command", async () => {
       const mockGroups = ["admins", "users", "guests"];
