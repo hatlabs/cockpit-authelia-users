@@ -7,7 +7,13 @@ Uses Authelia-compatible parameters:
 """
 
 from argon2 import PasswordHasher, Type
-from argon2.exceptions import InvalidHashError, VerifyMismatchError
+from argon2.exceptions import VerifyMismatchError
+
+# Handle different argon2 versions: 21.x uses InvalidHash, 23.x+ uses InvalidHashError
+try:
+    from argon2.exceptions import InvalidHashError
+except ImportError:
+    from argon2.exceptions import InvalidHash as InvalidHashError
 
 # Authelia-compatible Argon2id parameters
 # See: https://www.authelia.com/configuration/first-factor/file/
