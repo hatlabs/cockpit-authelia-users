@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from typing import Any
 
 from .utils.errors import AutheliaUsersError
 
@@ -53,7 +54,7 @@ def main() -> None:
         sys.exit(1)
 
 
-def dispatch_command(args: argparse.Namespace) -> dict | list:
+def dispatch_command(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
     """Dispatch to the appropriate command handler."""
     # Import here to avoid circular imports
     from .commands import create_user, delete_user, get_user, list_groups, list_users, update_user
