@@ -1,0 +1,9 @@
+services:
+  debtools:
+    build:
+      context: .
+      dockerfile: Dockerfile.debtools
+    image: cockpit-authelia-users-debtools:latest
+    volumes:
+      - ../:/workspace
+    working_dir: /workspace

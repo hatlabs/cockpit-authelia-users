@@ -1,0 +1,14 @@
+{
+  "version": 0,
+  "require": {
+    "cockpit": "276"
+  },
+  "menu": {
+    "authelia-users": {
+      "label": "Authelia Users",
+      "order": 1000,
+      "path": "index.html"
+    }
+  },
+  "content-security-policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data:"
+}
