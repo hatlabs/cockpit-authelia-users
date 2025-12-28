@@ -5,18 +5,7 @@
 
 import type { User, UserInput, CreateUserInput, ApiError } from "./types";
 
-declare const cockpit: {
-  spawn: (
-    command: string[],
-    options?: { superuser?: string; err?: string }
-  ) => {
-    then: (
-      onSuccess: (output: string) => void,
-      onError: (error: { message: string; exit_status?: number }) => void
-    ) => void;
-    input: (data: string) => void;
-  };
-};
+// cockpit is declared globally in types.ts
 
 const BRIDGE_COMMAND = "cockpit-authelia-users-bridge";
 

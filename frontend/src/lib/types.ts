@@ -52,4 +52,27 @@ declare global {
   interface Window {
     debugging?: string | string[];
   }
+
+  /**
+   * Cockpit API types for location and navigation.
+   */
+  const cockpit: {
+    spawn: (
+      command: string[],
+      options?: { superuser?: string; err?: string }
+    ) => {
+      then: (
+        onSuccess: (output: string) => void,
+        onError: (error: { message: string; exit_status?: number }) => void
+      ) => void;
+      input: (data: string) => void;
+    };
+    location: {
+      path: string[];
+      options: Record<string, string>;
+      go: (path: string[], options?: Record<string, string>) => void;
+    };
+    addEventListener: (event: "locationchanged", callback: () => void) => void;
+    removeEventListener: (event: "locationchanged", callback: () => void) => void;
+  };
 }
