@@ -1,20 +1,22 @@
 import {
   Button,
+  Flex,
+  FlexItem,
   FormGroup,
   FormHelperText,
   HelperText,
   HelperTextItem,
   Label,
-  LabelGroup,
   Menu,
   MenuContent,
   MenuItem,
   MenuList,
   TextInput,
 } from "@patternfly/react-core";
+import { CheckIcon, PlusCircleIcon } from "@patternfly/react-icons";
 import { useEffect, useRef, useState } from "react";
 
-const DEFAULT_GROUPS = ["admins", "users", "guests"];
+const STANDARD_GROUPS = ["admins", "users", "guests"];
 
 export interface GroupInputProps {
   value: string[];
@@ -37,11 +39,11 @@ export function GroupInput({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Combine default groups with API groups, deduplicated
-  const allGroups = [...new Set([...DEFAULT_GROUPS, ...availableGroups])].sort();
+  // Custom groups from API (excluding standard groups)
+  const customGroupsFromApi = availableGroups.filter((g) => !STANDARD_GROUPS.includes(g));
 
-  // Filter suggestions based on input and exclude already selected
-  const suggestions = allGroups.filter(
+  // Filter suggestions for autocomplete: custom groups + any input match
+  const suggestions = customGroupsFromApi.filter(
     (group) => !value.includes(group) && group.toLowerCase().includes(inputValue.toLowerCase())
   );
 
@@ -55,7 +57,6 @@ export function GroupInput({
   }, [inputValue, suggestions.length]);
 
   const addGroup = (group: string) => {
-    // Normalize to lowercase for Authelia compatibility - group names are case-insensitive
     const trimmedGroup = group.trim().toLowerCase();
     if (trimmedGroup && !value.includes(trimmedGroup)) {
       onChange([...value, trimmedGroup]);
@@ -67,6 +68,15 @@ export function GroupInput({
 
   const removeGroup = (group: string) => {
     onChange(value.filter((g) => g !== group));
+  };
+
+  const toggleStandardGroup = (group: string) => {
+    if (isDisabled) return;
+    if (value.includes(group)) {
+      removeGroup(group);
+    } else {
+      addGroup(group);
+    }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -91,75 +101,111 @@ export function GroupInput({
     }
   };
 
+  // Custom groups that are selected (not standard groups)
+  const selectedCustomGroups = value.filter((g) => !STANDARD_GROUPS.includes(g));
+
   return (
     <FormGroup label="Groups" fieldId="groups">
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        {/* Selected groups as labels */}
-        {value.length > 0 && (
-          <LabelGroup categoryName="Selected groups">
-            {value.map((group) => (
-              <Label key={group} onClose={isDisabled ? undefined : () => removeGroup(group)}>
-                {group}
-              </Label>
+      <Flex direction={{ default: "column" }} gap={{ default: "gapSm" }}>
+        {/* Standard groups as toggleable chips + custom groups as removable labels */}
+        <FlexItem>
+          <Flex
+            gap={{ default: "gapSm" }}
+            alignItems={{ default: "alignItemsCenter" }}
+            flexWrap={{ default: "wrap" }}
+          >
+            {/* Standard groups - always visible, clickable to toggle */}
+            {STANDARD_GROUPS.map((group) => {
+              const isSelected = value.includes(group);
+              return (
+                <FlexItem key={group}>
+                  <Label
+                    color={isSelected ? "blue" : "grey"}
+                    icon={isSelected ? <CheckIcon /> : <PlusCircleIcon />}
+                    onClick={() => toggleStandardGroup(group)}
+                    style={{
+                      cursor: isDisabled ? "not-allowed" : "pointer",
+                      opacity: isDisabled ? 0.6 : 1,
+                    }}
+                  >
+                    {group}
+                  </Label>
+                </FlexItem>
+              );
+            })}
+
+            {/* Custom groups - removable labels */}
+            {selectedCustomGroups.map((group) => (
+              <FlexItem key={group}>
+                <Label color="blue" onClose={isDisabled ? undefined : () => removeGroup(group)}>
+                  {group}
+                </Label>
+              </FlexItem>
             ))}
-          </LabelGroup>
-        )}
+          </Flex>
+        </FlexItem>
 
-        {/* Input with autocomplete */}
-        <div style={{ position: "relative" }}>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <TextInput
-              ref={inputRef}
-              id="groups-input"
-              type="text"
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => {
-                if (inputValue.length > 0 && suggestions.length > 0) {
-                  setIsMenuOpen(true);
-                }
-              }}
-              placeholder={isLoading ? "Loading groups..." : "Type to add group"}
-              isDisabled={isDisabled || isLoading}
-              aria-label="Add group"
-            />
-            <Button
-              variant="secondary"
-              onClick={() => addGroup(inputValue)}
-              isDisabled={!inputValue.trim() || isDisabled || isLoading}
-            >
-              Add
-            </Button>
+        {/* Custom group input with autocomplete */}
+        <FlexItem>
+          <div style={{ position: "relative" }}>
+            <Flex gap={{ default: "gapSm" }}>
+              <FlexItem grow={{ default: "grow" }}>
+                <TextInput
+                  ref={inputRef}
+                  id="groups-input"
+                  type="text"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (inputValue.length > 0 && suggestions.length > 0) {
+                      setIsMenuOpen(true);
+                    }
+                  }}
+                  placeholder={isLoading ? "Loading..." : "Add custom group..."}
+                  isDisabled={isDisabled || isLoading}
+                  aria-label="Add custom group"
+                />
+              </FlexItem>
+              <FlexItem>
+                <Button
+                  variant="secondary"
+                  onClick={() => addGroup(inputValue)}
+                  isDisabled={!inputValue.trim() || isDisabled || isLoading}
+                >
+                  Add
+                </Button>
+              </FlexItem>
+            </Flex>
+
+            {/* Suggestions dropdown */}
+            {isMenuOpen && suggestions.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  marginTop: "4px",
+                }}
+              >
+                <Menu onSelect={handleMenuSelect} isScrollable>
+                  <MenuContent>
+                    <MenuList>
+                      {suggestions.map((group) => (
+                        <MenuItem key={group} itemId={group}>
+                          {group}
+                        </MenuItem>
+                      ))}
+                    </MenuList>
+                  </MenuContent>
+                </Menu>
+              </div>
+            )}
           </div>
-
-          {/* Suggestions dropdown */}
-          {isMenuOpen && suggestions.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                right: 0,
-                zIndex: 1000,
-                marginTop: "4px",
-              }}
-            >
-              <Menu onSelect={handleMenuSelect} isScrollable>
-                <MenuContent>
-                  <MenuList>
-                    {suggestions.map((group) => (
-                      <MenuItem key={group} itemId={group}>
-                        {group}
-                      </MenuItem>
-                    ))}
-                  </MenuList>
-                </MenuContent>
-              </Menu>
-            </div>
-          )}
-        </div>
-      </div>
+        </FlexItem>
+      </Flex>
 
       {error && (
         <FormHelperText>
