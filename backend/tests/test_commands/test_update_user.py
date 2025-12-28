@@ -88,7 +88,9 @@ class TestUpdateUser:
         """Empty password string doesn't change existing password."""
         _original_load = UserDatabase.load
         db = _original_load(sample_users_yaml)
-        original_hash = db.get_user("john").password  # type: ignore
+        original_user = db.get_user("john")
+        assert original_user is not None
+        original_hash = original_user.password
         monkeypatch.setattr(UserDatabase, "load", lambda path=None: db)
         monkeypatch.setattr(UserDatabase, "save", lambda self, path=None: None)
 
@@ -115,7 +117,8 @@ class TestUpdateUser:
         _original_load = UserDatabase.load
         db = _original_load(sample_users_yaml)
         original_user = db.get_user("john")
-        original_email = original_user.email  # type: ignore
+        assert original_user is not None
+        original_email = original_user.email
         monkeypatch.setattr(UserDatabase, "load", lambda path=None: db)
         monkeypatch.setattr(UserDatabase, "save", lambda self, path=None: None)
 

@@ -1,10 +1,13 @@
 """Pytest configuration and fixtures."""
 
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 import yaml
+
+from cockpit_authelia_users.utils.database import UserDatabase
 
 
 @pytest.fixture
@@ -12,6 +15,32 @@ def temp_dir():
     """Create a temporary directory for test files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
+
+
+@pytest.fixture
+def mock_database(monkeypatch: pytest.MonkeyPatch) -> Callable[[Path, bool], UserDatabase]:
+    """Factory fixture to mock UserDatabase.load() with a specific YAML file.
+
+    Usage:
+        def test_example(mock_database, sample_users_yaml):
+            db = mock_database(sample_users_yaml)
+            # Now UserDatabase.load() returns the mocked database
+            # db.save() is a no-op by default
+
+        def test_with_save(mock_database, sample_users_yaml):
+            db = mock_database(sample_users_yaml, mock_save=False)
+            # Now db.save() actually saves to the file
+    """
+    _original_load = UserDatabase.load
+
+    def factory(yaml_path: Path, mock_save: bool = True) -> UserDatabase:
+        db = _original_load(yaml_path)
+        monkeypatch.setattr(UserDatabase, "load", lambda path=None: db)
+        if mock_save:
+            monkeypatch.setattr(UserDatabase, "save", lambda self, path=None: None)
+        return db
+
+    return factory
 
 
 @pytest.fixture
