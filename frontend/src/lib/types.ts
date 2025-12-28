@@ -12,11 +12,12 @@ export interface User {
 
 /**
  * User data for update operations.
+ * All fields are optional for partial updates.
  * Password is plaintext (hashed by backend).
  */
 export interface UserInput {
-  displayname: string;
-  email: string;
+  displayname?: string;
+  email?: string;
   password?: string;
   disabled?: boolean;
   groups?: string[];
@@ -26,9 +27,13 @@ export interface UserInput {
  * User data for create operations.
  * Includes user_id which is required for new users.
  */
-export interface CreateUserInput extends UserInput {
+export interface CreateUserInput {
   user_id: string;
-  password: string; // Required for creation
+  displayname: string;
+  email: string;
+  password: string;
+  disabled?: boolean;
+  groups?: string[];
 }
 
 /**
