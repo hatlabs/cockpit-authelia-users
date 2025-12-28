@@ -10,7 +10,8 @@ override_dh_missing:
 override_dh_auto_build:
 	# Build frontend
 	cd frontend && npm install && npm run build
-	# Build backend (Python package with pyproject.toml using standard Debian approach)
+	# Build backend to staging area
+	# Note: pip installs to usr/local/ even with --prefix=/usr when using --root
 	cd backend && pip3 install --prefix=/usr --root=$(CURDIR)/debian/tmp .
 
 override_dh_auto_install:
@@ -19,18 +20,19 @@ override_dh_auto_install:
 		echo "Rebuilding backend for install phase..."; \
 		cd backend && pip3 install --prefix=/usr --root=$(CURDIR)/debian/tmp .; \
 	fi
-	# Install backend Python package
-	mkdir -p $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages
-	cp -r $(CURDIR)/debian/tmp/usr/local/lib/python*/dist-packages/cockpit_authelia_users $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages/
-	# Install dist-info directory with robust handling
-	@distinfo_dir=$$(find $(CURDIR)/debian/tmp/usr/local/lib/python*/dist-packages -maxdepth 1 -type d -name 'cockpit_authelia_users-*.dist-info' | head -n 1); \
-	if [ -z "$$distinfo_dir" ]; then \
-		echo "Error: .dist-info directory not found" >&2; exit 1; \
-	fi; \
-	cp -r "$$distinfo_dir" $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages/
-	# Install CLI script
-	mkdir -p $(CURDIR)/debian/cockpit-authelia-users/usr/bin
-	install -m 755 $(CURDIR)/debian/tmp/usr/local/bin/cockpit-authelia-users-bridge $(CURDIR)/debian/cockpit-authelia-users/usr/bin/cockpit-authelia-users-bridge
+	# Find and install backend Python package (pip path varies by version/config)
+	@pkg_dir=$$(find $(CURDIR)/debian/tmp -type d -name 'cockpit_authelia_users' -path '*/dist-packages/*' | head -n 1); \
+	distinfo_dir=$$(find $(CURDIR)/debian/tmp -type d -name 'cockpit_authelia_users-*.dist-info' | head -n 1); \
+	bin_file=$$(find $(CURDIR)/debian/tmp -type f -name 'cockpit-authelia-users-bridge' | head -n 1); \
+	if [ -z "$$pkg_dir" ]; then echo "Error: cockpit_authelia_users package not found" >&2; exit 1; fi; \
+	if [ -z "$$distinfo_dir" ]; then echo "Error: .dist-info directory not found" >&2; exit 1; fi; \
+	if [ -z "$$bin_file" ]; then echo "Error: CLI script not found" >&2; exit 1; fi; \
+	mkdir -p $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages; \
+	cp -r "$$pkg_dir" $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages/; \
+	find $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true; \
+	cp -r "$$distinfo_dir" $(CURDIR)/debian/cockpit-authelia-users/usr/lib/python3/dist-packages/; \
+	mkdir -p $(CURDIR)/debian/cockpit-authelia-users/usr/bin; \
+	install -m 755 "$$bin_file" $(CURDIR)/debian/cockpit-authelia-users/usr/bin/cockpit-authelia-users-bridge
 	# Install frontend
 	mkdir -p $(CURDIR)/debian/cockpit-authelia-users/usr/share/cockpit/authelia-users
 	cp -r frontend/dist/* $(CURDIR)/debian/cockpit-authelia-users/usr/share/cockpit/authelia-users/
@@ -41,4 +43,4 @@ override_dh_auto_clean:
 	rm -rf debian/tmp
 
 override_dh_auto_test:
-	# Skip tests during package build - they are run in CI
+	# Skip tests during package build - tests are run separately in CI

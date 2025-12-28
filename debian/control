@@ -9,7 +9,7 @@ Rules-Requires-Root: no
 
 Package: cockpit-authelia-users
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, cockpit (>= 276), python3-yaml, python3-argon2
+Depends: ${misc:Depends}, python3, cockpit (>= 276), python3-yaml, python3-argon2
 Description: Cockpit plugin for Authelia user management
  A web-based user management interface for Authelia that provides:
   - List, create, edit, and delete Authelia users
