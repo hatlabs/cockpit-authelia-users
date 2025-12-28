@@ -313,13 +313,13 @@ export function UserFormView({ mode, userId, onSave, onCancel }: UserFormViewPro
           isLoading={groupsLoading}
         />
 
-        {/* Disabled */}
-        <FormGroup label="Account Status" fieldId="disabled">
+        {/* Account Active Toggle */}
+        <FormGroup label="Account Status" fieldId="account-active">
           <Switch
-            id="disabled"
+            id="account-active"
             label={form.disabled ? "Account disabled" : "Account active"}
-            isChecked={form.disabled}
-            onChange={(_event, checked) => handleFieldChange("disabled", checked)}
+            isChecked={!form.disabled}
+            onChange={(_event, checked) => handleFieldChange("disabled", !checked)}
           />
         </FormGroup>
 
