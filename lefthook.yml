@@ -28,3 +28,7 @@ pre-commit:
           exit 0
         fi
       fail_text: "Run 'npm run lint' in frontend/ to see issues."
+
+    check-changelog:
+      run: .github/scripts/check-changelog-edits.sh
+      fail_text: "Direct debian/changelog edits are not allowed. Use './run bumpversion' instead."
