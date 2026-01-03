@@ -29,10 +29,10 @@ The plugin follows the established HaLOS Cockpit plugin pattern with a Python ba
 └────────────────────────────┼────────────────────────────────┘
                              │ File I/O (with locking)
                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  /var/lib/container-apps/halos-authelia-container/data/     │
-│  └── users_database.yml                                     │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  /var/lib/container-apps/halos-core-containers/data/authelia/        │
+│  └── users_database.yml                                              │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Components

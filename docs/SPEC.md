@@ -64,7 +64,7 @@ When editing a user, any fields not managed by this UI (e.g., future Authelia fi
 
 ### File Location
 
-- User database path: `/var/lib/container-apps/halos-authelia-container/data/users_database.yml`
+- User database path: `/var/lib/container-apps/halos-core-containers/data/authelia/users_database.yml`
 - File permissions: 600 (read/write by root only)
 - Backend requires root/sudo access to read and modify the file
 

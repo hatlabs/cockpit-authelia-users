@@ -17,7 +17,7 @@ from .errors import DatabaseError
 
 # Default path for the Authelia users database
 DEFAULT_DATABASE_PATH = Path(
-    "/var/lib/container-apps/halos-authelia-container/data/users_database.yml"
+    "/var/lib/container-apps/halos-core-containers/data/authelia/users_database.yml"
 )
 
 # Default groups always included in list_groups
