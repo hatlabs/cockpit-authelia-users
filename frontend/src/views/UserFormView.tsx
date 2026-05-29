@@ -18,8 +18,10 @@ import { createUser, getUser, listGroups, updateUser } from "../lib/api";
 import type { UserInput } from "../lib/types";
 import type { FormErrors, FormState } from "../lib/validation";
 import { hasErrors, validateUserForm } from "../lib/validation";
+import { AdminGatedButton } from "../components/AdminGatedButton";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { GroupInput } from "../components/GroupInput";
+import { useAdminPermission } from "../hooks/useAdminPermission";
 
 export interface UserFormViewProps {
   mode: "create" | "edit";
@@ -46,6 +48,9 @@ export function UserFormView({ mode, userId, onSave, onCancel }: UserFormViewPro
   const [loadError, setLoadError] = useState<string | null>(null);
   const [availableGroups, setAvailableGroups] = useState<string[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
+  const { allowed: isAdminAllowed } = useAdminPermission();
+  const isAdminRequired = isAdminAllowed !== true;
 
   // Load user data in edit mode
   const fetchUser = useCallback(async () => {
@@ -71,14 +76,17 @@ export function UserFormView({ mode, userId, onSave, onCancel }: UserFormViewPro
     }
   }, [mode, userId]);
 
-  // Load available groups
+  // Load available groups. A failure here often signals the same permission
+  // gap that blocks the rest of the form — surface it inline rather than
+  // letting the autocomplete look empty for an unexplained reason.
   const fetchGroups = useCallback(async () => {
     setGroupsLoading(true);
+    setGroupsError(null);
     try {
       const groups = await listGroups();
       setAvailableGroups(groups);
-    } catch {
-      // Silently fail - default groups will still be available
+    } catch (err) {
+      setGroupsError(err instanceof Error ? err.message : "Failed to load groups");
     } finally {
       setGroupsLoading(false);
     }
@@ -306,6 +314,16 @@ export function UserFormView({ mode, userId, onSave, onCancel }: UserFormViewPro
         )}
 
         {/* Groups */}
+        {groupsError && (
+          <div style={{ marginBottom: "0.5rem" }}>
+            <ErrorAlert
+              title="Could not load groups"
+              error={groupsError}
+              onRetry={fetchGroups}
+              onDismiss={() => setGroupsError(null)}
+            />
+          </div>
+        )}
         <GroupInput
           value={form.groups}
           onChange={(groups) => handleFieldChange("groups", groups)}
@@ -325,9 +343,15 @@ export function UserFormView({ mode, userId, onSave, onCancel }: UserFormViewPro
 
         {/* Actions */}
         <ActionGroup>
-          <Button variant="primary" type="submit" isLoading={saving} isDisabled={saving}>
+          <AdminGatedButton
+            variant="primary"
+            type="submit"
+            isAdminRequired={isAdminRequired}
+            isDisabled={saving}
+            isLoading={saving}
+          >
             {mode === "create" ? "Create User" : "Save Changes"}
-          </Button>
+          </AdminGatedButton>
           <Button variant="link" onClick={onCancel} isDisabled={saving}>
             Cancel
           </Button>

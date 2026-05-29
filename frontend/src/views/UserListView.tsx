@@ -1,5 +1,4 @@
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -21,9 +20,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { deleteUser, listUsers, updateUser } from "../lib/api";
 import type { User } from "../lib/types";
+import { AdminGatedButton, ADMIN_REQUIRED_TOOLTIP } from "../components/AdminGatedButton";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
+import { useAdminPermission } from "../hooks/useAdminPermission";
 
 export interface UserListViewProps {
   onCreateUser: () => void;
@@ -36,6 +37,8 @@ export function UserListView({ onCreateUser, onEditUser }: UserListViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
+  const { allowed: isAdminAllowed } = useAdminPermission();
+  const isAdminRequired = isAdminAllowed !== true;
 
   // Delete confirmation dialog state
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -133,9 +136,14 @@ export function UserListView({ onCreateUser, onEditUser }: UserListViewProps) {
             Create your first user to get started with Authelia authentication.
           </EmptyStateBody>
           <EmptyStateFooter>
-            <Button variant="primary" onClick={onCreateUser} icon={<PlusCircleIcon />}>
+            <AdminGatedButton
+              variant="primary"
+              onClick={onCreateUser}
+              isAdminRequired={isAdminRequired}
+              icon={<PlusCircleIcon />}
+            >
               Create User
-            </Button>
+            </AdminGatedButton>
           </EmptyStateFooter>
         </EmptyState>
       </PageSection>
@@ -157,9 +165,14 @@ export function UserListView({ onCreateUser, onEditUser }: UserListViewProps) {
       <Toolbar>
         <ToolbarContent>
           <ToolbarItem>
-            <Button variant="primary" onClick={onCreateUser} icon={<PlusCircleIcon />}>
+            <AdminGatedButton
+              variant="primary"
+              onClick={onCreateUser}
+              isAdminRequired={isAdminRequired}
+              icon={<PlusCircleIcon />}
+            >
               Create User
-            </Button>
+            </AdminGatedButton>
           </ToolbarItem>
         </ToolbarContent>
       </Toolbar>
@@ -212,6 +225,10 @@ export function UserListView({ onCreateUser, onEditUser }: UserListViewProps) {
                   <DropdownList>
                     <DropdownItem
                       key="edit"
+                      isAriaDisabled={isAdminRequired}
+                      tooltipProps={
+                        isAdminRequired ? { content: ADMIN_REQUIRED_TOOLTIP } : undefined
+                      }
                       onClick={() => {
                         setOpenActionMenu(null);
                         onEditUser(user.user_id);
@@ -221,6 +238,10 @@ export function UserListView({ onCreateUser, onEditUser }: UserListViewProps) {
                     </DropdownItem>
                     <DropdownItem
                       key="toggle"
+                      isAriaDisabled={isAdminRequired}
+                      tooltipProps={
+                        isAdminRequired ? { content: ADMIN_REQUIRED_TOOLTIP } : undefined
+                      }
                       onClick={() => {
                         setOpenActionMenu(null);
                         setToggleDialog({ isOpen: true, user });
@@ -230,6 +251,10 @@ export function UserListView({ onCreateUser, onEditUser }: UserListViewProps) {
                     </DropdownItem>
                     <DropdownItem
                       key="delete"
+                      isAriaDisabled={isAdminRequired}
+                      tooltipProps={
+                        isAdminRequired ? { content: ADMIN_REQUIRED_TOOLTIP } : undefined
+                      }
                       onClick={() => {
                         setOpenActionMenu(null);
                         setDeleteDialog({ isOpen: true, user });
