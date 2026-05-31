@@ -46,6 +46,17 @@ export interface ApiError {
 }
 
 /**
+ * Reactive permission handle returned by `cockpit.permission()`.
+ * `allowed` is `null` until Cockpit resolves the state; treat null as "not yet allowed".
+ */
+export interface CockpitPermission {
+  allowed: boolean | null;
+  addEventListener: (event: "changed", callback: () => void) => void;
+  removeEventListener: (event: "changed", callback: () => void) => void;
+  close: () => void;
+}
+
+/**
  * Global type extensions for Cockpit environment.
  */
 declare global {
@@ -74,5 +85,6 @@ declare global {
     };
     addEventListener: (event: "locationchanged", callback: () => void) => void;
     removeEventListener: (event: "locationchanged", callback: () => void) => void;
+    permission?: (options: { admin: boolean }) => CockpitPermission;
   };
 }
